@@ -26,10 +26,13 @@ build/
 *.swo
 
 # Data
+data/
 *.csv
 *.parquet
 *.pkl
 *.h5
+*.pptx
+*.backup
 
 # Logs
 *.log

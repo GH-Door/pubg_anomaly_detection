@@ -17,7 +17,12 @@
 ![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
 ![XGBoost](https://img.shields.io/badge/XGBoost-EC4E20?style=for-the-badge&logo=xgboost&logoColor=white)
+![LightGBM](https://img.shields.io/badge/LightGBM-0A9EDC?style=for-the-badge&logoColor=white)
+![CatBoost](https://img.shields.io/badge/CatBoost-FFCC00?style=for-the-badge&logoColor=black)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
+![Optuna](https://img.shields.io/badge/Optuna-4B8BBE?style=for-the-badge&logoColor=white)
+![IsolationForest](https://img.shields.io/badge/Isolation%20Forest-27AE60?style=for-the-badge&logoColor=white)
+![AutoEncoder](https://img.shields.io/badge/AutoEncoder-8E44AD?style=for-the-badge&logoColor=white)
 
 </div>
 
@@ -25,11 +30,11 @@
 
 **💭 Language : Python**
 
-**🛠 Tool : Google Colab, Jupyter Notebook**
+**🛠 Tool : Jupyter Notebook**
 
 **📅 진행기간 : 2025.10 ~ 2025.11**
 
-**👥 인원 : 개인 프로젝트**
+**👥 인원 : 개인**
 
 <br>
 
@@ -57,7 +62,7 @@
  <img src="img/PUBG-Preprocessing.png" width="800">
 <p>
 
-- **[Kaggle](https://www.kaggle.com/)** 에서 배틀그라운드 유저 데이터 수집
+- **[[Kagggle] PUBG Finish Placement Prediction](https://www.kaggle.com/competitions/pubg-finish-placement-prediction/data/)** 에서 배틀그라운드 유저 데이터 수집
 - **수집 결과: 4,446,966 rows × 29 columns**
 
 <br><br>
@@ -87,19 +92,31 @@
 
 # 파생 변수 생성
 
+### 기본 파생 변수 (V1)
+
 | 변수명 | 설명 | 계산식 |
 |--------|------|--------|
 | total_distance | 총 이동거리 | walkDistance + rideDistance + swimDistance |
-| headshot_Rate | 킬 수 대비 헤드샷 | headshotKills / kills |
-| kills_per_distance | 킬 수 대비 이동거리 | total_distance / kills |
+| headshot_Rate | 킬 수 대비 헤드샷 비율 | headshotKills / kills |
+| kills_per_distance | 이동거리 대비 킬 수 | kills / total_distance |
 
 <br>
 
-- 총이동거리,헤드샷비율,이동거리대비킬수생성
-- total_distance =walkDistance + rideDistance + swimDistance
-- headshot_Rate = headshotKils / kils
-- kils_per_distance = total_distance / kils
-- 최종:24columns
+### 추가 파생 변수 (V2 - Feature Engineering)
+
+| 변수명 | 설명 | 계산식 |
+|--------|------|--------|
+| DBNO_per_kill | 킬 대비 쓰러뜨린 수 | DBNOs / kills |
+| weapons_per_dist | 이동거리 대비 무기 획득 | weaponsAcquired / total_distance |
+| avg_kill_distance | 평균 킬 거리 | longestKill / kills |
+| damage_per_kill | 킬 대비 데미지 | damageDealt / kills |
+| heals_per_kill | 킬 대비 힐 사용 | heals / kills |
+
+<br>
+
+- V1 기본 파생 변수 3개 생성 → **최종 24 columns**
+- V2 추가 파생 변수 5개 생성 → **최종 29 columns**
+- Feature Importance 기반 핵심 피처: **damageDealt(0.22), roadKills(0.14), kills(0.13)**
 
 <br><br>
 
@@ -155,7 +172,7 @@
 # 비지도 학습
 
 <p align="center">
- <img src="img/PUBG-EDA4.png" width="800">
+ <img src="img/PUBG-AD.png" width="800">
 <p>
 
 - **label**이 없기에 비지도 학습 기반 모델인 **Isolation Forest, AutoEncoder** 모델을 활용해 분리
@@ -167,6 +184,14 @@
 
 - **Scaler** : 데이터가 **비정규분포** 형태를 보이고, 이상치의 영향을 최소화하기 위해 **RobustScaler**를 적용
 - **변수 제거** : **rideDistance** 변수는 총 이동거리 변수와 **상관관계(0.9)가 높아 다중공선성을 방지**하기 위해 제거
+
+<br>
+
+### 이상치 비율(Contamination) 설정 근거
+
+- Krafton 공식 발표에 따르면 **2024년 상반기에만 148만 계정**이 불법 소프트웨어 사용으로 영구 밴되었으며, 지속적인 제재를 통해 핵 유저 비율은 **감소 추세**에 있음 ([PUBG Anti-Cheat 2024 1H Review](https://pubg.com/en/news/7584))
+- 본 데이터는 **winPlacePerc ≥ 0.74의 상위권 플레이어**만을 대상으로 하며, 상위권일수록 핵 유저 밀도가 높은 경향이 있음
+- 위를 고려하여 contamination을 **0.7%로 보수적으로 설정**, Isolation Forest와 AutoEncoder **두 모델의 공통 이상치(교집합)**를 최종 핵 유저 라벨로 정의함으로써 **오탐(False Positive)을 최소화**
 
 <br>
 
@@ -210,19 +235,77 @@
 # 최종 모델
 
 ### XGBoost 모델 설정
-- **목적** : 앞서 모델을 통해 생성된 라벨을 바탕으로, 핵/일반 유저의 행동 패턴과 특징을 학습하여 성능 평가
-- **Scaler** : 데이터가 비정규분포 형태를 보이고, 이상치의 영향을 최소화하기 위해 **RobustScaler**를 적용
-- 핵 유저의 극소수 비율(0.29%) 문제를 해결하기 위해 **SMOTE** 기법을 사용하여 2%로 늘려서 성능 비교
+- **목적** : 앞서 생성된 라벨을 바탕으로 핵/일반 유저의 행동 패턴을 학습하여 성능 평가
+- **Scaler** : 비정규분포 및 이상치 영향 최소화를 위해 **RobustScaler** 적용
+- 핵 유저 비율(0.19%) 클래스 불균형 해결을 위해 **Base / Class Weight / SMOTE** 3가지 방법 비교
+
+<br>
+
+### 모델 선택 과정
+
+XGBoost, LightGBM, CatBoost 3가지 모델을 동일 조건(V2 피처, Class Weight/SMOTE/Base)으로 비교
+
+| Model | Method | Precision | Recall | F1 Score | PR AUC |
+|-------|--------|-----------|--------|----------|--------|
+| **XGB** | **Class Weight** | **0.69** | **0.59** | **0.64** | 0.70 |
+| XGB | SMOTE | 0.78 | 0.53 | 0.63 | 0.70 |
+| XGB | Base | 0.90 | 0.44 | 0.60 | **0.74** |
+| LGB | Class Weight | 0.53 | 0.77 | 0.63 | **0.74** |
+| LGB | SMOTE | 0.80 | 0.51 | 0.62 | 0.73 |
+| LGB | Base | 0.50 | 0.48 | 0.49 | 0.46 |
+| CAT | Class Weight | 0.46 | 0.76 | 0.57 | 0.70 |
+| CAT | SMOTE | 0.79 | 0.51 | 0.62 | 0.70 |
+| CAT | Base | 0.86 | 0.44 | 0.58 | 0.71 |
+
+- **XGBoost + Class Weight 선택 이유**: F1 최고(0.64), Precision/Recall 균형 측면에서 가장 안정적
+- LGB Class Weight는 Recall(0.77)이 높지만 Precision(0.53)이 낮아 오탐 위험 존재
+- CAT Class Weight는 Recall은 높으나 전반적인 F1이 낮아 제외
+
+<br>
+
+### 클래스 불균형 처리 방법 비교 (XGBoost 기준)
+
+| Metric | Base | Class Weight | SMOTE | **Optuna Tuned** |
+|--------|------|-------------|-------|-----------------|
+| Precision | **0.9015** | 0.6946 | 0.7833 | 0.6607 |
+| Recall | 0.4424 | 0.5922 | 0.5276 | **0.6820** |
+| **F1 Score** | 0.5957 | 0.6393 | 0.6320 | **0.6700** |
+| **PR AUC** | **0.7400** | 0.7000 | 0.7000 | 0.7251 |
+
+> Base/Class Weight/SMOTE: Validation set | Optuna Tuned: Test set
+
+- **Base**: Precision 편향 심함 (Recall 0.44로 핵 유저 탐지 한계)
+- **Class Weight**: Precision/Recall 가장 균형 → **최종 방법으로 선택**
+- **Optuna Tuned**: TPE Sampler 500회 탐색, `scale_pos_weight` 포함 하이퍼파라미터 최적화 → Recall 및 F1 최고 달성
+
+<br>
+
+### 주요 성과
+- **Recall 개선**: Class Weight 0.59 → Optuna 튜닝 후 **0.68**
+- **F1 Score**: **0.6700** 달성
+- **PR AUC**: **0.7251** (클래스 불균형 환경 기준 견고한 수치)
+- **정상 유저 오탐율**: **0.067%** (FP 152건 / 정상 유저 225,307명)
+
+<br><br>
+
+# 결과
 
 <p align="center">
  <img src="img/PUBG-result.png" width="800">
+ <img src="img/PUBG-confusion_pr.png" width="800"> 
 <p>
 
-### 주요 성과
-- **SMOTE 적용 후 Precision 향상**: 82.11% → **96.28%**
-- **Recall 대폭 개선**: 45.91% → **90.92%**
-- **F1 Score 크게 향상**: 58.89% → **93.52%**
-- **ROC-AUC 최고 성능**: **99.96%** 달성
+| Metric | Base | Class Weight | SMOTE | **Optuna Tuned** |
+|--------|------|-------------|-------|-----------------|
+| Precision | **0.9015** | 0.6946 | 0.7833 | 0.6607 |
+| Recall | 0.4424 | 0.5922 | 0.5276 | **0.6820** |
+| **F1 Score** | 0.5957 | 0.6393 | 0.6320 | **0.6700** |
+| **PR AUC** | **0.7400** | 0.7000 | 0.7000 | 0.7251 |
+
+> \* Base/Class Weight/SMOTE: Validation set | Optuna Tuned: Test set
+
+- Precision은 Base가 가장 높으나 Recall이 낮아 실제 핵 유저 탐지에 한계
+- **Optuna 튜닝**으로 Recall·F1 개선, 균형 잡힌 탐지 성능 확보
 
 <br><br>
 
@@ -235,7 +318,11 @@
 - **게임 생태계 건전성**: 장기적으로 게임의 지속성과 커뮤니티 건강성 증진
 
 ## Lesson and Learned
-- **하이브리드 접근법의 효과성**: 비지도 학습으로 라벨을 생성하고 지도학습으로 성능을 향상시키는 방법의 유효성 확인
-- **클래스 불균형 해결의 중요성**: SMOTE 기법 적용을 통해 극심한 클래스 불균형 문제를 효과적으로 해결하고 성능 개선 경험
-- **통계적 검증의 필요성**: PSM과 가설검정을 통한 라벨 신뢰성 검증이 모델의 설득력을 높이는 데 중요함을 학습
-- **도메인 지식의 중요성**: 게임 내 핵 사용 패턴에 대한 이해를 바탕으로 한 가설 설정과 특성 엔지니어링의 중요성 체감
+- **하이브리드 접근법의 효과성**: 비지도 학습(Isolation Forest·AutoEncoder)으로 라벨을 생성하고 지도학습(XGBoost)으로 성능을 향상시키는 파이프라인 설계 경험
+- **클래스 불균형 전략 비교**: SMOTE는 Precision 편향, Class Weight는 균형 잡힌 탐지 성능을 보임 → 불균형 데이터에서 방법론 선택의 중요성 체감
+- **통계적 검증의 필요성**: PSM·U-Test를 통한 라벨 신뢰성 검증이 모델의 설득력을 높이는 데 핵심임을 학습
+- **하이퍼파라미터 튜닝**: Optuna TPE Sampler를 활용해 `scale_pos_weight`를 포함한 최적 파라미터 탐색으로 Recall 0.59 → 0.68 개선
+- **도메인 지식의 중요성**: 게임 내 핵 사용 패턴 이해를 바탕으로 한 가설 설정과 피처 엔지니어링(V2 추가 5개 변수)의 중요성 체감
+- **한계 인식**: Ground Truth 라벨 부재로 비지도 학습 기반 라벨 노이즈가 불가피, FN 32% 미탐지 → threshold 조정 또는 추가 행동 피처로 개선 가능
+
+

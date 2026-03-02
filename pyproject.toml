@@ -1,0 +1,31 @@
+[project]
+name = "pubg-anomaly-detection"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "catboost>=1.2.10",
+    "imbalanced-learn>=0.14.1",
+    "ipykernel>=7.2.0",
+    "ipython>=9.10.0",
+    "ipywidgets>=8.1.8",
+    "jupyter>=1.1.1",
+    "jupyterlab>=4.5.5",
+    "lightgbm>=4.6.0",
+    "matplotlib>=3.10.8",
+    "notebook>=7.5.4",
+    "numpy>=2.4.2",
+    "optuna>=4.7.0",
+    "pandas>=3.0.1",
+    "psmpy>=0.3.16",
+    "scikit-learn>=1.8.0",
+    "scipy>=1.17.1",
+    "seaborn>=0.13.2",
+    "statsmodels>=0.14.6",
+    "torch>=2.10.0",
+    "torchaudio>=2.10.0",
+    "torchvision>=0.25.0",
+    "tqdm>=4.67.3",
+    "xgboost>=3.2.0",
+]
