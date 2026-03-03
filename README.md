@@ -176,7 +176,7 @@
 <p>
 
 - **label**이 없기에 비지도 학습 기반 모델인 **Isolation Forest, AutoEncoder** 모델을 활용해 분리
-- 두 모델에서 이상치로 식별된 데이터 중 **공통 이상치(교집합)**에 해당하는 데이터를 **핵 유저로 정의**
+- 두 모델에서 이상치로 식별된 데이터 중 **공통 이상치**(교집합)에 해당하는 데이터를 **핵 유저로 정의**
 
 <br>
 
@@ -191,7 +191,7 @@
 
 - Krafton 공식 발표에 따르면 **2024년 상반기에만 148만 계정**이 불법 소프트웨어 사용으로 영구 밴되었으며, 지속적인 제재를 통해 핵 유저 비율은 **감소 추세**에 있음 ([PUBG Anti-Cheat 2024 1H Review](https://pubg.com/en/news/7584))
 - 본 데이터는 **winPlacePerc ≥ 0.74의 상위권 플레이어**만을 대상으로 하며, 상위권일수록 핵 유저 밀도가 높은 경향이 있음
-- 위를 고려하여 contamination을 **0.7%로 보수적으로 설정**, Isolation Forest와 AutoEncoder **두 모델의 공통 이상치(교집합)**를 최종 핵 유저 라벨로 정의함으로써 **오탐(False Positive)을 최소화**
+- 위를 고려하여 contamination을 **0.7%로 보수적으로 설정**, Isolation Forest와 AutoEncoder **두 모델의 공통 이상치**(교집합)를 최종 핵 유저 라벨로 정의함으로써 **오탐(False Positive)을 최소화**
 
 <br>
 
@@ -212,6 +212,7 @@
 # 통계적 검정
 
 ### 가설 설정
+- EDA 결과 승리/패배 유저 간 킬수 4.3배, 이동거리 2.6배 차이를 확인, 이를 바탕으로 아래와 같은 가설을 수립
 - **가설1** : 핵 사용자들은 일반 사용자 보다 **헤드샷 비율이 높을 것이다.**(정확한 에임 핵을 사용)
 - **가설2** : 핵 사용자들은 일반 사용자 보다 다르게 **무기 획득 수가 많을 것이다.**(스피드 핵 사용)
 - **가설3** : 핵 사용자들은 일반 사용자 보다 **힐 아이템 사용이 많을 것이다.**(스피드 핵, 월핵 등 사용)
@@ -224,7 +225,9 @@
 
 1. **VIF 확인** : PSM 과정에서 로지스틱 회귀를 사용하여 점수를 계산하기 떄문에 다중공선성 문제를 확인
 2. **PSM(성향 점수 매칭)**: 그룹 간 샘플 크기 불균형 해소 및 혼란 변수를 줄이기 위한 데이터 정제
-3. **U-Test(가설 검정)**: **p-value** 값이 **0.05** 이하여야 그룹 간 통계적 의미가 유의미
+3. **U-Test(가설 검정)**: 대부분의 변수가 **비정규분포를** 따르므로 **비모수 검정인 U-Test**로 그룹 간 차이 검정
+4. **검증 결과**: 3가지 가설 모두 **p < 0.05** 로 라벨 **신뢰성 확인**
+
 
 <p align="center">
  <img src="img/PUBG-검증.png" width="800">
@@ -232,16 +235,7 @@
 
 <br><br>
 
-# 최종 모델
-
-### XGBoost 모델 설정
-- **목적** : 앞서 생성된 라벨을 바탕으로 핵/일반 유저의 행동 패턴을 학습하여 성능 평가
-- **Scaler** : 비정규분포 및 이상치 영향 최소화를 위해 **RobustScaler** 적용
-- 핵 유저 비율(0.19%) 클래스 불균형 해결을 위해 **Base / Class Weight / SMOTE** 3가지 방법 비교
-
-<br>
-
-### 모델 선택 과정
+# 모델 선택
 
 XGBoost, LightGBM, CatBoost 3가지 모델을 동일 조건(V2 피처, Class Weight/SMOTE/Base)으로 비교
 
@@ -263,16 +257,14 @@ XGBoost, LightGBM, CatBoost 3가지 모델을 동일 조건(V2 피처, Class Wei
 
 <br>
 
+### XGBoost 모델 설정
+- **목적** : 앞서 생성된 라벨을 바탕으로 핵/일반 유저의 행동 패턴을 학습하여 성능 평가
+- **Scaler** : 비정규분포 및 이상치 영향 최소화를 위해 **RobustScaler** 적용
+- 핵 유저 비율(0.19%) 클래스 불균형 해결을 위해 **Base / Class Weight / SMOTE** 3가지 방법 비교
+
+<br>
+
 ### 클래스 불균형 처리 방법 비교 (XGBoost 기준)
-
-| Metric | Base | Class Weight | SMOTE | **Optuna Tuned** |
-|--------|------|-------------|-------|-----------------|
-| Precision | **0.9015** | 0.6946 | 0.7833 | 0.6607 |
-| Recall | 0.4424 | 0.5922 | 0.5276 | **0.6820** |
-| **F1 Score** | 0.5957 | 0.6393 | 0.6320 | **0.6700** |
-| **PR AUC** | **0.7400** | 0.7000 | 0.7000 | 0.7251 |
-
-> Base/Class Weight/SMOTE: Validation set | Optuna Tuned: Test set
 
 - **Base**: Precision 편향 심함 (Recall 0.44로 핵 유저 탐지 한계)
 - **Class Weight**: Precision/Recall 가장 균형 → **최종 방법으로 선택**
@@ -280,19 +272,13 @@ XGBoost, LightGBM, CatBoost 3가지 모델을 동일 조건(V2 피처, Class Wei
 
 <br>
 
-### 주요 성과
-- **Recall 개선**: Class Weight 0.59 → Optuna 튜닝 후 **0.68**
-- **F1 Score**: **0.6700** 달성
-- **PR AUC**: **0.7251** (클래스 불균형 환경 기준 견고한 수치)
-- **정상 유저 오탐율**: **0.067%** (FP 152건 / 정상 유저 225,307명)
-
 <br><br>
 
 # 결과
 
 <p align="center">
  <img src="img/PUBG-result.png" width="800">
- <img src="img/PUBG-confusion_pr.png" width="800"> 
+ <img src="img/PUBG-confusion_pr.png" width="800">
 <p>
 
 | Metric | Base | Class Weight | SMOTE | **Optuna Tuned** |
@@ -307,6 +293,12 @@ XGBoost, LightGBM, CatBoost 3가지 모델을 동일 조건(V2 피처, Class Wei
 - Precision은 Base가 가장 높으나 Recall이 낮아 실제 핵 유저 탐지에 한계
 - **Optuna 튜닝**으로 Recall·F1 개선, 균형 잡힌 탐지 성능 확보
 
+### 주요 성과
+- **Recall 개선**: Class Weight 0.59 → Optuna 튜닝 후 **0.68**
+- **F1 Score**: **0.6700** 달성
+- **PR AUC**: **0.7251** (클래스 불균형 환경 기준 견고한 수치)
+- **정상 유저 오탐율**: **0.067%** (FP 152건 / 정상 유저 225,307명)
+
 <br><br>
 
 # 기대효과 및 Lesson and Learned
@@ -319,7 +311,7 @@ XGBoost, LightGBM, CatBoost 3가지 모델을 동일 조건(V2 피처, Class Wei
 
 ## Lesson and Learned
 - **하이브리드 접근법의 효과성**: 비지도 학습(Isolation Forest·AutoEncoder)으로 라벨을 생성하고 지도학습(XGBoost)으로 성능을 향상시키는 파이프라인 설계 경험
-- **클래스 불균형 전략 비교**: SMOTE는 Precision 편향, Class Weight는 균형 잡힌 탐지 성능을 보임 → 불균형 데이터에서 방법론 선택의 중요성 체감
+- **클래스 불균형 전략 비교**: Base·SMOTE는 Precision 편향(Recall 낮음), Class Weight는 균형 잡힌 탐지 성능을 보임 → 불균형 데이터에서 방법론 선택의 중요성 체감
 - **통계적 검증의 필요성**: PSM·U-Test를 통한 라벨 신뢰성 검증이 모델의 설득력을 높이는 데 핵심임을 학습
 - **하이퍼파라미터 튜닝**: Optuna TPE Sampler를 활용해 `scale_pos_weight`를 포함한 최적 파라미터 탐색으로 Recall 0.59 → 0.68 개선
 - **도메인 지식의 중요성**: 게임 내 핵 사용 패턴 이해를 바탕으로 한 가설 설정과 피처 엔지니어링(V2 추가 5개 변수)의 중요성 체감
