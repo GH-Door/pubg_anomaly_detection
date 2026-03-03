@@ -34,6 +34,9 @@ data/
 *.pptx
 *.backup
 
+# PDF
+pdf/
+
 # Logs
 *.log
 

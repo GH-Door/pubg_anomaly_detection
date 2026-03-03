@@ -51,7 +51,7 @@
 
 # 프로세스
 <p align="center">
- <img src="img/PUBG-Process.png" width="800">
+ <img src="img/PUBG_process.png" width="800">
 <p>
 
 <br><br>
