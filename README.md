@@ -4,317 +4,217 @@
 
 <br><br>
 
-<h1>🎯 PUBG Anomaly Detection</h1>
+<h1>🎯 PUBG 핵 유저 탐지</h1>
 
-<p>배틀그라운드 핵/버그 유저 탐지 및 분석</p>
+<p>
+  <strong>Anomaly Detection</strong><br>
+</p>
 
-<br>
-
-### 🏅 Tech Stack 🏅
-
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Pandas](https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white)
-![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
-![XGBoost](https://img.shields.io/badge/XGBoost-EC4E20?style=for-the-badge&logo=xgboost&logoColor=white)
-![LightGBM](https://img.shields.io/badge/LightGBM-0A9EDC?style=for-the-badge&logoColor=white)
-![CatBoost](https://img.shields.io/badge/CatBoost-FFCC00?style=for-the-badge&logoColor=black)
-![TensorFlow](https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white)
-![Optuna](https://img.shields.io/badge/Optuna-4B8BBE?style=for-the-badge&logoColor=white)
-![IsolationForest](https://img.shields.io/badge/Isolation%20Forest-27AE60?style=for-the-badge&logoColor=white)
-![AutoEncoder](https://img.shields.io/badge/AutoEncoder-8E44AD?style=for-the-badge&logoColor=white)
+<p>
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white">
+<img src="https://img.shields.io/badge/Pandas-150458?style=for-the-badge&logo=pandas&logoColor=white">
+<img src="https://img.shields.io/badge/NumPy-013243?style=for-the-badge&logo=numpy&logoColor=white">
+<img src="https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white">
+<img src="https://img.shields.io/badge/TensorFlow-FF6F00?style=for-the-badge&logo=tensorflow&logoColor=white">
+<img src="https://img.shields.io/badge/Optuna-4B8BBE?style=for-the-badge&logoColor=white">
+</p>
 
 </div>
 
 <br>
 
-**💭 Language : Python**
+## Overview
 
-**🛠 Tool : Jupyter Notebook**
+> - 온라인 게임에서는 핵/버그 사용자가 공정한 게임 플레이를 방해하고 사용자 경험을 저해하는 문제가 지속적으로 발생한다.
+> - PUBG 역시 예외가 아니라, Krafton이 2024년 상반기에만 148만 계정을 영구 밴할 정도로 핵 사용이 심각한 문제다.
+> - 그런데 실제 유저 로그 데이터에는 "핵 유저다"라는 정답 라벨이 존재하지 않아, 지도학습을 곧바로 적용할 수 없다.
+> - Kaggle의 PUBG 유저 행동 로그 약 444만 건을 활용
 
-**📅 진행기간 : 2025.10 ~ 2025.11**
+| 항목 | 내용 |
+|:-----|:-----|
+| **📅 Date** | 2025.10 ~ 2025.11 |
+| **👥 Type** | 개인 프로젝트 |
+| **🎯 Goal** | 핵/버그 사용자를 효과적으로 탐지함으로써 공정성을 유지하고 사용자 경험을 향상 |
+| **🔧 Tech Stack** | Python, Pandas, scikit-learn, PyTorch, Optuna, statsmodels(PSM/VIF) |
+| **📊 Dataset** | [[Kaggle] PUBG Finish Placement Prediction](https://www.kaggle.com/competitions/pubg-finish-placement-prediction/data/) — 4,446,966 rows × 29 columns |
 
-**👥 인원 : 개인**
+전체 분석 코드는 [`code/Anomaly_detection.ipynb`](code/Anomaly_detection.ipynb) 참고
 
-<br>
+---
 
----------------------------------------------------------------------------------
+## Insight
 
-# 프로젝트 개요
-
-- 온라인 게임에서는 핵/버그 사용자들이 공정한 게임 플레이를 방해하고, 게임 경험을 저해하는 문제가 발생
-- 이로 인해 게임 유저들의 불만이 증가하고, 게임 생태계에 악영향을 끼친다
-- 핵/버그 사용자를 효과적으로 탐지, 제재함으로써 공정성을 유지하고, 사용자 경험을 향상시키는 것이 목표
-- 이상치 라벨이 없는 상황에서 비지도 학습과 지도학습을 조합한 하이브리드 접근법 적용
-
-<br><br>
-
-# 프로세스
-<p align="center">
- <img src="img/PUBG_process.png" width="800">
-<p>
-
-<br><br>
-
-# 데이터 수집
+- **Create Label**: 서로 다른 원리의 두 모델이 동시에 이상치로 지목한 유저(**0.19%**)만 핵 유저로 정의
+- **신뢰성**: PSM으로 유저 간 불균형과 혼란 변수를 제거한 뒤 U-Test를 적용, 3개 가설 모두 **p < 0.05**로 통계적 신뢰성을 확보
+- **Supervised Learning**: 검증된 Label로 XGBoost를 학습하고 튜닝한 결과 **Recall 15%**, **F1 Score 5%** 향상
+- **오탐(FP)**: 정상 유저 22만 5천여 명 중 오탐은 152건, **오탐율 0.067%** 불과해 실사용 관점에서도 부담이 적은 결과
 
 <p align="center">
- <img src="img/PUBG-Preprocessing.png" width="800">
-<p>
+<img src="img/nb-cell104.png" width="800">
+</p>
 
-- **[[Kagggle] PUBG Finish Placement Prediction](https://www.kaggle.com/competitions/pubg-finish-placement-prediction/data/)** 에서 배틀그라운드 유저 데이터 수집
-- **수집 결과: 4,446,966 rows × 29 columns**
+---
 
-<br><br>
+## Analysis
 
-# 데이터 전처리
+> 아래는 [`code/Anomaly_detection.ipynb`](code/Anomaly_detection.ipynb)의 분석 흐름을 요약한 것이다.  
+> 전체 코드·중간 산출물은 노트북에서 확인할 수 있다.
 
-| 컬럼명 | 설명 |
-|--------|------|
-| matchId | 경기를 식별하는 ID |
-| numGroups | 그룹 수 |
-| maxPlace | 경기 내 최악의 순위 |
-| matchDuration | 지속 시간(시계열 X) |
-| killPlace | 킬 순위 |
-| vehicDestroys | 차량 파괴 횟수 |
-| killPoints | 처치 기반 순위 |
-| winPoints | 승리 기반 외부 순위 |
+### Data & Preprocessing
 
-<br>
+- [[Kaggle] PUBG Finish Placement Prediction](https://www.kaggle.com/competitions/pubg-finish-placement-prediction/data/)에서 4,446,966 rows × 29 columns 수집
+- 이상탐지 목적과 무관한 순위·점수 기반 컬럼 8개
+  - (matchId, numGroups, maxPlace, killPlace, matchDuration, vehicleDestroys, killPoints, winPoints) 제거
+- `rankPoints`의 -1값(1,701,810건)은 결측이 아닌 "미참여"로 판단해 0으로 대체
+- `total_distance`, `headshot_Rate`, `kills_per_distance` 등 파생 변수 생성
 
-- 이상치탐지에불필요한데이터제거(순위,점수기반)
-- "rankPoints" 컬럼에-1값의수:1,701,810
-- "rankPoints"
-- 1을0으로대체
-- 총 **8개의columns 제거**
-
-<br><br>
-
-# 파생 변수 생성
-
-### 기본 파생 변수 (V1)
-
-| 변수명 | 설명 | 계산식 |
-|--------|------|--------|
-| total_distance | 총 이동거리 | walkDistance + rideDistance + swimDistance |
-| headshot_Rate | 킬 수 대비 헤드샷 비율 | headshotKills / kills |
-| kills_per_distance | 이동거리 대비 킬 수 | kills / total_distance |
-
-<br>
-
-### 추가 파생 변수 (V2 - Feature Engineering)
-
-| 변수명 | 설명 | 계산식 |
-|--------|------|--------|
-| DBNO_per_kill | 킬 대비 쓰러뜨린 수 | DBNOs / kills |
-| weapons_per_dist | 이동거리 대비 무기 획득 | weaponsAcquired / total_distance |
-| avg_kill_distance | 평균 킬 거리 | longestKill / kills |
-| damage_per_kill | 킬 대비 데미지 | damageDealt / kills |
-| heals_per_kill | 킬 대비 힐 사용 | heals / kills |
-
-<br>
-
-- V1 기본 파생 변수 3개 생성 → **최종 24 columns**
-- V2 추가 파생 변수 5개 생성 → **최종 29 columns**
-- Feature Importance 기반 핵심 피처: **damageDealt(0.22), roadKills(0.14), kills(0.13)**
-
-<br><br>
-
-# EDA
-
-### 전체 분포
+### EDA
 
 <p align="center">
- <img src="img/PUBG-EDA.png" width="800">
-<p>
+<img src="img/nb-cell022.png" width="45%">
+<img src="img/nb-cell028.png" width="45%">
+</p>
 
-- 위 변수들의 분포 확인 결과 0값이 대부분의 분포를 차지하고 있음을 나타냄
-- 즉, 전체 데이터는 정규분포가 아닌 비정규 분포 형태를 띄고 있음
+- 전체 변수 분포 확인 결과 0값이 대부분을 차지하는 비정규분포 형태 → 이후 스케일링은 **RobustScaler**를 선택
+- 승리 유저 비율은 전체의 **2.87%** 에 불과하지만, 킬수 **4.3배**·이동거리 **2.6배**로 패배 유저보다 뚜렷하게 높은 수치를 보임
+- **승리 유저 중 일부는 핵을 사용해서 승리를 도모했을 가능성이 높다고 가정**, 
+- 이후 분석은 상위권 유저(`winPlacePerc` ≥ 0.74, 3분위수) 1,128,703명(25.38%)을 대상으로 진행
 
-<br>
+### Label Creation (Unsupervised Learning)
 
-### 승리 유저
-
-<p align="center">
- <img src="img/PUBG-EDA1.png" width="800">
-<p>
-
-- **승리 유저 비율**: **2.87%**
-- **패배 유저 비율**: 97.13%
-- 승리 유저는 데이터에서 **매우 적은 비중을 차지**
-- 핵 사용자는 **핵을 활용하여 승리를 도모했을 가능성이 높다고 가정**하여, 각 유저 간의 행동 패턴을 비교 분석
-
-<br>
-
-### 승리 VS 패배 유저 비교
+> 라벨이 없기 때문에 원리가 다른 두 비지도 모델을 각각 학습시키고, **공통으로 이상치라고 판단한 유저만 핵 유저로 정의**
 
 <p align="center">
- <img src="img/PUBG-EDA2.png" width="800">
-<p>
+<img src="img/nb-cell037.png" width="45%">
+<img src="img/nb-cell038.png" width="45%">
+</p>
 
-- 승리 유저의 데이터가 수적으로 적음에도 불구하고, 패배 유저보다 높은 평균값을 보임
-
-<br>
-
-### 승리 점수 기반 전처리
-
-<img src="img/PUBG-EDA3.png" width="600">
-
-- 분석 결과 승리 유저의 패턴이 핵 사용자와 비슷할 것으로 나타남
-- 그렇기에 승리 유저들만을 대상으로 분석을 고려했으나
-- 이는 전체 데이터의 2.87%에 불과하여 데이터 손실을 초래
-- 하여 승리 점수 값의 3분위수인 0.74 이상을 기준으로 범위 조정
-    - 전체 데이터 중 전처리 데이터 비율: **74.62%**
-    - 전체 데이터 중 최종 데이터: **1,128,703(25.38%)**
-
-<br><br>
-
-# 비지도 학습
+- 상관관계 확인 결과 `rideDistance`가 `total_distance`와 상관계수 **0.9**로 다중공선성 우려 → 모델 입력에서 제외
+- `roadKills`(99.4%), `teamKills`(97.9%) 등 0값 비율이 극단적으로 높은 변수도 다수 확인됐으나 
+- 희소 이벤트 자체가 이상행동 신호일 수 있다고 판단해 제거하지 않고 유지
+- 실제로 이후 Feature Importance에서 두 변수 모두 상위권으로 확인됨(Results 참고)
+- 이상치 비율은 Krafton 공식 발표 기반 핵 유저 감소 추세와, 상위권일수록 밀도가 높다는 가정을 반영해 **0.7%로 보수적 설정**
+- ([PUBG Anti-Cheat 2024 1H Review](https://pubg.com/en/news/7584), [PUBG: BATTLEGROUNDS/문제점/핵 - 나무위키](https://namu.wiki/w/PUBG:%20BATTLEGROUNDS/%EB%AC%B8%EC%A0%9C%EC%A0%90/%ED%95%B5))
 
 <p align="center">
- <img src="img/PUBG-AD.png" width="800">
-<p>
+<img src="img/nb-cell043.png" width="45%">
+<img src="img/nb-cell051.png" width="45%">
+</p>
 
-- **label**이 없기에 비지도 학습 기반 모델인 **Isolation Forest, AutoEncoder** 모델을 활용해 분리
-- 두 모델에서 이상치로 식별된 데이터 중 **공통 이상치**(교집합)에 해당하는 데이터를 **핵 유저로 정의**
+| 모델 | 이상치 개수 | 이상치 비율 |
+|---|---:|---:|
+| Isolation Forest | 7,901 | 0.7% |
+| AutoEncoder | 7,901 | 0.7% |
+| **공통 이상치(최종 라벨)** | **2,171** | **0.19%** |
 
-<br>
-
-### 모델 학습(공통)
-
-- **Scaler** : 데이터가 **비정규분포** 형태를 보이고, 이상치의 영향을 최소화하기 위해 **RobustScaler**를 적용
-- **변수 제거** : **rideDistance** 변수는 총 이동거리 변수와 **상관관계(0.9)가 높아 다중공선성을 방지**하기 위해 제거
-
-<br>
-
-### 이상치 비율(Contamination) 설정 근거
-
-- Krafton 공식 발표에 따르면 **2024년 상반기에만 148만 계정**이 불법 소프트웨어 사용으로 영구 밴되었으며, 지속적인 제재를 통해 핵 유저 비율은 **감소 추세**에 있음 ([PUBG Anti-Cheat 2024 1H Review](https://pubg.com/en/news/7584))
-- 본 데이터는 **winPlacePerc ≥ 0.74의 상위권 플레이어**만을 대상으로 하며, 상위권일수록 핵 유저 밀도가 높은 경향이 있음
-- 위를 고려하여 contamination을 **0.7%로 보수적으로 설정**, Isolation Forest와 AutoEncoder **두 모델의 공통 이상치**(교집합)를 최종 핵 유저 라벨로 정의함으로써 **오탐(False Positive)을 최소화**
-
-<br>
-
-### 모델 평가(간접)
+- ISO Score는 음수 영역이 클수록, AutoEncoder는 재구성 오류(reconstruction error)가 클수록 이상치로 판단
+- 아래는 AutoEncoder가 설정한 임계값(0.7% 지점)을 실제 재구성 오류 분포에 적용한 결과
+- 두 모델 모두 이상치를 탐지했지만 완벽한 분리는 아님
+- 실제 이상탐지의 목표는 완벽한 분리보다 효과적인 탐지에 있다는 점에서 합리적인 수준으로 판단
 
 <p align="center">
- <img src="img/PUBG-Model1.png" width="800">
-<p>
+<img src="img/nb-cell050.png" width="600">
+</p>
 
-- **ISO** Model : **음수 Score**영역이 클수록 **이상치로 탐지**
-- **Auto** Model: 재구성 오류를 기반으로 하여 재구성 오류가 클수록 **이상치로 탐지**
-- **평가**
-    - 두 모델 모두 이상치를 탐지했으나, 완벽한 분리라고 보기는 어려움
-    - 실제로 이상탐지의 목표가 완벽한 분리보다는 탐지하는데 있다는 점에서 괜찮은 성능이라고 판단
+### Hypothesis
 
-<br>
+> EDA에서 확인한 승리/패배 유저 간 행동 차이를 바탕으로, 핵 사용 패턴에 대한 가설 3개를 세우고 통계적으로 검증
 
-# 통계적 검정
+| 가설 | 내용 | 배경 |
+|---|---|---|
+| H1 | 핵 사용자는 일반 사용자보다 **헤드샷 비율**이 높을 것이다 | 정확한 에임 핵 사용 추정 |
+| H2 | 핵 사용자는 일반 사용자와 다르게 **무기 획득 수**가 많을 것이다 | 스피드 핵 사용 추정 |
+| H3 | 핵 사용자는 일반 사용자보다 **힐 아이템 사용**이 많을 것이다 | 스피드 핵·월핵 사용 추정 |
 
-### 가설 설정
-- EDA 결과 승리/패배 유저 간 킬수 4.3배, 이동거리 2.6배 차이를 확인, 이를 바탕으로 아래와 같은 가설을 수립
-- **가설1** : 핵 사용자들은 일반 사용자 보다 **헤드샷 비율이 높을 것이다.**(정확한 에임 핵을 사용)
-- **가설2** : 핵 사용자들은 일반 사용자 보다 다르게 **무기 획득 수가 많을 것이다.**(스피드 핵 사용)
-- **가설3** : 핵 사용자들은 일반 사용자 보다 **힐 아이템 사용이 많을 것이다.**(스피드 핵, 월핵 등 사용)
-
-<br>
-
-### 가설 검정
-
-- 목적: 생성된 라벨의 신빙성을 검증하고, 그룹 간 통계적 차이를 확인
-
-1. **VIF 확인** : PSM 과정에서 로지스틱 회귀를 사용하여 점수를 계산하기 떄문에 다중공선성 문제를 확인
-2. **PSM(성향 점수 매칭)**: 그룹 간 샘플 크기 불균형 해소 및 혼란 변수를 줄이기 위한 데이터 정제
-3. **U-Test(가설 검정)**: 대부분의 변수가 **비정규분포를** 따르므로 **비모수 검정인 U-Test**로 그룹 간 차이 검정
-4. **검증 결과**: 3가지 가설 모두 **p < 0.05** 로 라벨 **신뢰성 확인**
-
+1. **VIF** 사전 점검(PSM이 로지스틱 회귀를 쓰기 때문에 다중공선성 확인)
+2. **PSM**으로 정상/핵 유저 간 표본 불균형과 혼란 변수 제거
+3. **U-Test**(비정규분포이므로 비모수 검정)로 그룹 간 차이 검정
 
 <p align="center">
- <img src="img/PUBG-검증.png" width="800">
-<p>
+<img src="img/nb-cell065.png" width="31%">
+<img src="img/nb-cell067.png" width="31%">
+<img src="img/nb-cell069.png" width="31%">
+</p>
 
-<br><br>
+| 가설 | 검정 결과 | 판정 |
+|---|---|:---:|
+| H1 | 헤드샷 비율 p < 0.05 | 채택 |
+| H2 | 무기 획득 수 p < 0.05 | 채택 |
+| H3 | 힐 아이템 사용 p < 0.05 | 채택 |
 
-# 모델 선택
+> 3개 가설 모두 채택되면서, 비지도 학습으로 만든 라벨이 우연이 아니라 **실제 행동 패턴 차이에 근거한 라벨**  
+> 임을 통계적으로 확인. 특히 PSM 단계는 "핵 유저와 정상 유저 표본 크기가 크게 달라 직접 비교가 무의미하다"는  
+> 문제를 사전에 인지하고 보정한 과정으로, 라벨 검증 이전에 비교 자체의 공정성부터 확보했다는 점에서 의미가 있다.
 
-XGBoost, LightGBM, CatBoost 3가지 모델을 동일 조건(V2 피처, Class Weight/SMOTE/Base)으로 비교
+### Model Selection
+
+> XGBoost, LightGBM, CatBoost 3개 모델을 Base / Class Weight / SMOTE 3가지 방식으로 동일 조건 비교
+
+<p align="center">
+<img src="img/nb-cell086.png" width="800">
+</p>
 
 | Model | Method | Precision | Recall | F1 Score | PR AUC |
 |-------|--------|-----------|--------|----------|--------|
 | **XGB** | **Class Weight** | **0.69** | **0.59** | **0.64** | 0.70 |
 | XGB | SMOTE | 0.78 | 0.53 | 0.63 | 0.70 |
-| XGB | Base | 0.90 | 0.44 | 0.60 | **0.74** |
-| LGB | Class Weight | 0.53 | 0.77 | 0.63 | **0.74** |
-| LGB | SMOTE | 0.80 | 0.51 | 0.62 | 0.73 |
-| LGB | Base | 0.50 | 0.48 | 0.49 | 0.46 |
+| XGB | Base | 0.90 | 0.44 | 0.60 | 0.74 |
+| LGB | Class Weight | 0.53 | 0.77 | 0.63 | 0.74 |
 | CAT | Class Weight | 0.46 | 0.76 | 0.57 | 0.70 |
-| CAT | SMOTE | 0.79 | 0.51 | 0.62 | 0.70 |
-| CAT | Base | 0.86 | 0.44 | 0.58 | 0.71 |
 
-- **XGBoost + Class Weight 선택 이유**: F1 최고(0.64), Precision/Recall 균형 측면에서 가장 안정적
-- LGB Class Weight는 Recall(0.77)이 높지만 Precision(0.53)이 낮아 오탐 위험 존재
-- CAT Class Weight는 Recall은 높으나 전반적인 F1이 낮아 제외
+- Base는 Precision에 치우쳐 핵 유저 탐지에 한계(Recall 0.44), SMOTE는 Precision/Recall 균형이 애매함
+- **XGBoost + Class Weight**가 F1(0.64)과 Precision/Recall 균형에서 가장 안정적이라 최종 방법으로 선택
+- 이후 Optuna(TPE Sampler, 500회 탐색)로 `scale_pos_weight`를 포함한 하이퍼파라미터 최적화 진행
 
-<br>
+---
 
-### XGBoost 모델 설정
-- **목적** : 앞서 생성된 라벨을 바탕으로 핵/일반 유저의 행동 패턴을 학습하여 성능 평가
-- **Scaler** : 비정규분포 및 이상치 영향 최소화를 위해 **RobustScaler** 적용
-- 핵 유저 비율(0.19%) 클래스 불균형 해결을 위해 **Base / Class Weight / SMOTE** 3가지 방법 비교
-
-<br>
-
-### 클래스 불균형 처리 방법 비교 (XGBoost 기준)
-
-- **Base**: Precision 편향 심함 (Recall 0.44로 핵 유저 탐지 한계)
-- **Class Weight**: Precision/Recall 가장 균형 → **최종 방법으로 선택**
-- **Optuna Tuned**: TPE Sampler 500회 탐색, `scale_pos_weight` 포함 하이퍼파라미터 최적화 → Recall 및 F1 최고 달성
-
-<br>
-
-<br><br>
-
-# 결과
-
-<p align="center">
- <img src="img/PUBG-result.png" width="800">
- <img src="img/PUBG-confusion_pr.png" width="800">
-<p>
+## Results
 
 | Metric | Base | Class Weight | SMOTE | **Optuna Tuned** |
 |--------|------|-------------|-------|-----------------|
-| Precision | **0.9015** | 0.6946 | 0.7833 | 0.6607 |
+| Precision | 0.9015 | 0.6946 | 0.7833 | 0.6607 |
 | Recall | 0.4424 | 0.5922 | 0.5276 | **0.6820** |
 | **F1 Score** | 0.5957 | 0.6393 | 0.6320 | **0.6700** |
-| **PR AUC** | **0.7400** | 0.7000 | 0.7000 | 0.7251 |
+| **PR AUC** | 0.7400 | 0.7000 | 0.7000 | 0.7251 |
 
-> \* Base/Class Weight/SMOTE: Validation set | Optuna Tuned: Test set
+> \* Base/Class Weight/SMOTE: Validation set 기준, Optuna Tuned: Test set 기준
 
-- Precision은 Base가 가장 높으나 Recall이 낮아 실제 핵 유저 탐지에 한계
-- **Optuna 튜닝**으로 Recall·F1 개선, 균형 잡힌 탐지 성능 확보
+<p align="center">
+<img src="img/nb-cell105.png" width="600">
+</p>
 
-### 주요 성과
+- Optuna 튜닝 이후 `damageDealt`가 가장 높은 중요도를 보였고
+- 애초에 0값 비율이 99.4%로 극단적이라 제거를 고민했던 `roadKills`와 `teamKills`가 2·3위를 차지 
+- "희소 이벤트가 이상행동 신호"라는 판단이 실제로 맞았음을 확인
 - **Recall 개선**: Class Weight 0.59 → Optuna 튜닝 후 **0.68**
-- **F1 Score**: **0.6700** 달성
-- **PR AUC**: **0.7251** (클래스 불균형 환경 기준 견고한 수치)
-- **정상 유저 오탐율**: **0.067%** (FP 152건 / 정상 유저 225,307명)
+- **정상 유저 오탐율**: **0.067%**(FP 152건 / 정상 유저 225,307명)로 실사용 관점에서도 부담이 적은 수준
 
-<br><br>
-
-# 기대효과 및 Lesson and Learned
-
-## 기대효과
-- **게임 공정성 향상**: 핵/버그 사용자를 효과적으로 탐지하여 공정한 게임 환경 조성
-- **사용자 경험 개선**: 핵 사용자 제재를 통한 일반 사용자들의 게임 만족도 향상
-- **자동화된 탐지 시스템**: 실시간으로 이상 행동 패턴을 탐지하는 자동화 시스템 구축 가능
-- **게임 생태계 건전성**: 장기적으로 게임의 지속성과 커뮤니티 건강성 증진
+---
 
 ## Lesson and Learned
-- **하이브리드 접근법의 효과성**: 비지도 학습(Isolation Forest·AutoEncoder)으로 라벨을 생성하고 지도학습(XGBoost)으로 성능을 향상시키는 파이프라인 설계 경험
-- **클래스 불균형 전략 비교**: Base·SMOTE는 Precision 편향(Recall 낮음), Class Weight는 균형 잡힌 탐지 성능을 보임 → 불균형 데이터에서 방법론 선택의 중요성 체감
-- **통계적 검증의 필요성**: PSM·U-Test를 통한 라벨 신뢰성 검증이 모델의 설득력을 높이는 데 핵심임을 학습
-- **하이퍼파라미터 튜닝**: Optuna TPE Sampler를 활용해 `scale_pos_weight`를 포함한 최적 파라미터 탐색으로 Recall 0.59 → 0.68 개선
-- **도메인 지식의 중요성**: 게임 내 핵 사용 패턴 이해를 바탕으로 한 가설 설정과 피처 엔지니어링(V2 추가 5개 변수)의 중요성 체감
-- **한계 인식**: Ground Truth 라벨 부재로 비지도 학습 기반 라벨 노이즈가 불가피, FN 32% 미탐지 → threshold 조정 또는 추가 행동 피처로 개선 가능
 
+**Takeaways**
+- 하이브리드 접근법: 비지도 학습으로 라벨을 생성하고 지도학습으로 성능을 향상시키는 파이프라인을 직접 설계한 경험
+- 도메인 판단의 유효성: 
+  - 0값 비율이 극단적으로 높은 변수를 제거하지 않고 "희소 이벤트 = 이상 신호"라는 도메인 맥락으로 유지 판단
+  - 이후 Feature Importance 상위권으로 확인되며 자동화된 필터링보다 사람의 판단이 유효할 수 있음을 검증
+- 클래스 불균형 비교: 
+  - Base·SMOTE는 Precision 편향, Class Weight는 균형 잡힌 탐지 성능을 보임
+  - 불균형 데이터에서 방법론 선택의 중요성 체감
+- 통계적 검증의 필요성: PSM·U-Test를 통한 라벨 신뢰성 검증이 모델의 설득력을 높이는 데 핵심임을 학습
+- 하이퍼파라미터 튜닝: Optuna 로 `scale_pos_weight`를 포함한 최적 파라미터를 탐색해 Recall 15% 개선
 
+**Limitations**
+- Ground Truth 부재: 비지도 학습 기반 라벨 특성상 노이즈가 불가피하며, 실제 핵 유저 패턴과 완전히 일치한다는 보장은 없음
+- 미탐지(FN) 존재: 
+  - 전체 핵 유저 중 약 32%는 여전히 미탐지 상태
+  - threshold 조정이나 추가 행동 피처(에임 정확도, 반응속도 등)로 개선 여지가 있음
+- 정적 데이터의 한계
+  - 실시간으로 진화하는 핵 프로그램 패턴을 이 데이터(2019년 수집분)만으로는 반영할 수 없어
+  - 주기적인 재학습 없이는 시간이 지날수록 탐지력이 떨어질 가능성이 있음
+
+---
+
+## Acknowledgements
+
+이 프로젝트는 [Kaggle: PUBG Finish Placement Prediction](https://www.kaggle.com/competitions/pubg-finish-placement-prediction) 데이터를 사용
