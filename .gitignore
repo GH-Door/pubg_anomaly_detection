@@ -16,6 +16,9 @@ venv/
 dist/
 build/
 
+# models
+catboost_info/
+
 # Jupyter Notebook
 .ipynb_checkpoints/
 
